@@ -27,15 +27,15 @@
    cd virtual-artist
    ```
 2. Создайте .env в корне проекта
-```
-APP_PORT=8000
-DATABASE_URL=postgresql://user:password@db:5432/virtual_artist
-POSTGRES_USER=test
-POSTGRES_PASSWORD=test
-POSTGRES_DB=virtual_artist
-RABBITMQ_USER=test
-RABBITMQ_PASSWORD=test
-```
+   ```bash
+   APP_PORT=8000
+   DATABASE_URL=postgresql://user:password@db:5432/virtual_artist
+   POSTGRES_USER=test
+   POSTGRES_PASSWORD=test
+   POSTGRES_DB=virtual_artist
+   RABBITMQ_USER=test
+   RABBITMQ_PASSWORD=test
+   ```
 2. Запустите контейнеры:  
    ```bash
    docker-compose up --build
