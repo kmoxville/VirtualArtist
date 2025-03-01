@@ -30,3 +30,6 @@ Core service:
 ```
 http://localhost:8000
 ```
+
+## Architectural overview
+![alt text](overview.drawio.png)
