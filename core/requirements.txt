@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+python-dotenv  # Для работы с переменными окружения
+sqlalchemy     # Для работы с базой данных
+asyncpg        # Асинхронный драйвер для PostgreSQL
+pika           # Для работы с RabbitMQ
