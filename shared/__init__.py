@@ -1,0 +1,1 @@
+from .rabbitmq import get_connection_string
