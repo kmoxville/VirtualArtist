@@ -1,16 +1,68 @@
-version: '3.8'
-
 services:
   core:
-    build: ./core
+    container_name: core
+    build: 
+      context: ./
+      dockerfile: ./core/Dockerfile
     ports:
       - "${APP_PORT}:8000"
     env_file:
       - .env
     depends_on:
-      - db
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
+      db:
+        condition: service_started
     restart: always
+    networks: 
+      - default
+    environment:
+      - RUNNING_IN_DOCKER=true
+  
+  chat_engine:
+    container_name: chat_engine
+    build: 
+      context: ./
+      dockerfile: ./chat_engine/Dockerfile
+    env_file:
+      - .env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      core:
+        condition: service_started
+    restart: always
+    networks: 
+      - default
+    environment:
+      - RUNNING_IN_DOCKER=true
+
+  speech_parser:
+    container_name: speech_parser
+    build: 
+      context: ./
+      dockerfile: ./speech_parser/Dockerfile
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    env_file:
+      - .env
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - RUNNING_IN_DOCKER=true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      core:
+        condition: service_started
+    restart: always
+    networks: 
+      - default
 
   db:
     image: postgres:15
@@ -23,9 +75,13 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks: 
+      - default
 
   rabbitmq:
     image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbitmq
     restart: always
     ports:
       - "5672:5672"  # Основной порт RabbitMQ
@@ -35,7 +91,17 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    networks: 
+      - default
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 8s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:
   rabbitmq_data:
+
+networks:
+  default:

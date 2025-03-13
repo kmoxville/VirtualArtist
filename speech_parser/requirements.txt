@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+python-dotenv
+sqlalchemy
+asyncpg
+pika
+keyboard
+pyaudio
+wave
+openai-whisper
+ffmpeg
+noisereduce
