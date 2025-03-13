@@ -1,1 +1,1 @@
-from .rabbitmq import get_connection_string
+from .rabbitmq_client import RabbitMQClient

@@ -1,6 +1,7 @@
 import logging
 import sys
 
+from shared import RabbitMQClient
 from speech_parser import SpeechParser
 
 logging.basicConfig(
@@ -13,5 +14,8 @@ logger = logging.getLogger("speech_parser")
 
 if __name__ == "__main__":
     logger.info("Starting SpeechParser...")
+
+    rabbit_client = RabbitMQClient(RabbitMQClient.AUDIO_QUEUE)
     speech_parser = SpeechParser()
-    speech_parser.run()
+
+    rabbit_client.consume_messages(speech_parser.process_audio)

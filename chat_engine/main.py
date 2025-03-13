@@ -1,43 +1,47 @@
-import time
-import pika
-import shared
+import sys
+import threading
+import logging
+from shared import RabbitMQClient
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
 
-def on_message_from_streamer(ch, method, properties, body):
-    print(f" [🎤] Streamer message received: {body.decode()}")
+logger = logging.getLogger("chat_engine")
 
-def on_message_from_chat(ch, method, properties, body):
-    print(f" [💬] Chat message received: {body.decode()}")
+class ChatEngine:
+    def __init__(self):
+        self.rabbit_chat_client = RabbitMQClient(RabbitMQClient.CHAT_QUEUE)
+        self.rabbit_streamer_client = RabbitMQClient(RabbitMQClient.STREAMER_QUEUE)
 
+    def process_chat_message(self, message_body):
+        logger.info(f"Processing chat message: {message_body}")
+        logger.info(f"ChatGPT response:")
 
-def main():
-    try:
-        print(" [🔌] Connecting to RabbitMQ...")
+    def process_streamer_message(self, message_body):
+        logger.info(f"Processing streamer message: {message_body}")
+        logger.info(f"ChatGPT response:")
 
-        connection = pika.BlockingConnection(pika.URLParameters(shared.get_connection_string()))
-        channel = connection.channel()
+    def consume_chat_messages(self):
+        self.rabbit_chat_client.consume_messages(self.process_chat_message)
 
-        channel.basic_consume(
-            queue='chat_engine_streamer_messages', 
-            on_message_callback=on_message_from_streamer, 
-            auto_ack=True
-        )
+    def consume_streamer_messages(self):
+        self.rabbit_streamer_client.consume_messages(self.process_streamer_message)
 
-        channel.basic_consume(
-            queue='chat_engine_chat_messages', 
-            on_message_callback=on_message_from_chat, 
-            auto_ack=True
-            )
-        
-        print(" [✅] Waiting for messages. To exit press CTRL+C")
-        channel.start_consuming()
-    
-    except pika.exceptions.AMQPConnectionError as e:
-        print(f" [⚠️] Connection failed: {e}. Retrying in 5 seconds...")
-        time.sleep(5)
-    except Exception as e:
-            print(f" [❌] Unexpected error: {e}")
+    def start(self):
+        chat_thread = threading.Thread(target=self.consume_chat_messages)
+        streamer_thread = threading.Thread(target=self.consume_streamer_messages)
+
+        chat_thread.start()
+        streamer_thread.start()
+
+        chat_thread.join()
+        streamer_thread.join()
 
 
 if __name__ == "__main__":
-    main()
+    logger.info("Starting ChatEngine...")
+    chat_engine = ChatEngine()
+    chat_engine.start()
