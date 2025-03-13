@@ -37,6 +37,33 @@ services:
     environment:
       - RUNNING_IN_DOCKER=true
 
+  speech_parser:
+    container_name: speech_parser
+    build: 
+      context: ./
+      dockerfile: ./speech_parser/Dockerfile
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    env_file:
+      - .env
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+      - RUNNING_IN_DOCKER=true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      core:
+        condition: service_started
+    restart: always
+    networks: 
+      - default
+
   db:
     image: postgres:15
     restart: always
