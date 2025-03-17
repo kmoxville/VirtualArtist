@@ -74,7 +74,7 @@ class RabbitMQClient:
                 properties=pika.BasicProperties(delivery_mode=2)  # Make message persistent
             )
             logger.info(f"Sent message to {self.queue_name}")
-        except pika.exceptions.AMQPChannelError as e:
+        except Exception as e:
             logger.error(f"Failed to send message: {e}")
             self.connect()  # Reconnect in case of error
             self.send_message(message)  # Retry sending the message

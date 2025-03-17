@@ -24,7 +24,7 @@ class WhisperTranscriber:
                 logger.info(f"GPU {i}: {gpu_name}")
 
     
-    def transcribe(self, audio_data):
+    def transcribe(self, audio_data, lang):
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file.write(audio_data)
             temp_file.close()
@@ -37,7 +37,7 @@ class WhisperTranscriber:
             
             options = whisper.DecodingOptions(fp16=False, beam_size=5)
             result = whisper.decode(self.model, mel, options)
-            result = self.model.transcribe(filename)
+            result = self.model.transcribe(filename, language=lang)
 
             os.remove(temp_file.name)
             
