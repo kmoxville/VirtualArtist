@@ -33,7 +33,7 @@ class WhisperTranscriber:
 
             audio = whisper.load_audio(filename)
             audio = whisper.pad_or_trim(audio)
-            mel = whisper.log_mel_spectrogram(audio).to(self.device)
+            mel = whisper.log_mel_spectrogram(audio, n_mels=128).to(self.device)
             
             options = whisper.DecodingOptions(fp16=False, beam_size=5)
             result = whisper.decode(self.model, mel, options)
