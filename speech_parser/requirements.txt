@@ -10,3 +10,5 @@ wave
 openai-whisper
 ffmpeg
 noisereduce
+faster-whisper
+onnxruntime-gpu

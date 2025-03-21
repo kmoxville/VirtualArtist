@@ -1,12 +1,9 @@
-import io
 import os
 import tempfile
 import wave
 import keyboard
 import pyaudio
 import logging
-
-import torchaudio
 
 
 logger = logging.getLogger("speech_recorder")
@@ -17,7 +14,8 @@ class AudioRecorder:
     RATE = 16000
     CHUNK = 1024
     
-    def __init__(self, hotkey="shift"):
+    
+    def __init__(self, hotkey="F7"):
         self.hotkey = hotkey
 
 

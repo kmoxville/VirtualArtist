@@ -1,7 +1,9 @@
 import logging
 import sys
+
 from shared import RabbitMQClient
 from audio_recorder import AudioRecorder
+
 
 logging.basicConfig(
     level=logging.INFO,
