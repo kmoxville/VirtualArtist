@@ -35,7 +35,7 @@ class ChatEngine:
             },
             config={"configurable": {"thread_id": "1"}})
         
-        logger.info(f"ChatGPT response: {response["messages"][-1].content}")
+        logger.info(f'ChatGPT response: {response["messages"][-1].content}')
 
 
     def consume_chat_messages(self):
