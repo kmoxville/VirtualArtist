@@ -5,15 +5,16 @@ import whisper
 import torch
 import logging
 import noisereduce as nr
+from faster_whisper import WhisperModel
 
 logger = logging.getLogger("speech_parser")
 
 class WhisperTranscriber:
-    def __init__(self, model_name="medium"):
+    def __init__(self, model_name="large"):
         logger.info("Initializing Whisper model...")
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model = whisper.load_model(model_name).to(self.device)
+        self.model = WhisperModel(model_name, self.device, compute_type="float16")
 
         logger.info(f"Model loaded on {self.device}")
 
@@ -23,7 +24,6 @@ class WhisperTranscriber:
                 gpu_name = torch.cuda.get_device_name(i)
                 logger.info(f"GPU {i}: {gpu_name}")
 
-    
     def transcribe(self, audio_data, lang):
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             temp_file.write(audio_data)
@@ -31,14 +31,12 @@ class WhisperTranscriber:
 
             filename = temp_file.name
 
-            audio = whisper.load_audio(filename)
-            audio = whisper.pad_or_trim(audio)
-            mel = whisper.log_mel_spectrogram(audio, n_mels=128).to(self.device)
-            
-            options = whisper.DecodingOptions(fp16=False, beam_size=5)
-            result = whisper.decode(self.model, mel, options)
-            result = self.model.transcribe(filename, language=lang)
+            segments, info = self.model.transcribe(
+                filename, 
+                language=lang,
+                temperature=0.2,
+                beam_size=5)
 
             os.remove(temp_file.name)
             
-            return result["text"]
+            return " ".join(segment.text for segment in segments)
