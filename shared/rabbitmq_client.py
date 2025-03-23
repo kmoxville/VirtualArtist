@@ -11,14 +11,18 @@ class RabbitMQClient:
     STREAMER_QUEUE = "chat_engine_streamer_messages"
     CHAT_QUEUE = "chat_engine_chat_messages"
     
-    def __init__(self, queue_name=""):
+    def __init__(self, queue_name="", save_to_storage: bool = False):
         self.queue_name = queue_name
         self.connection = None
         self.channel = None
         self.user = os.getenv("RABBITMQ_USER")
         self.password = os.getenv("RABBITMQ_PASSWORD")
-        self.max_retries = 5  # Максимальное количество попыток переподключения
-        self.retry_delay = 5  # Задержка между попытками переподключения в секундах
+        self.max_retries = 5
+        self.retry_delay = 3
+        self.send_to_storage = save_to_storage
+
+        if save_to_storage:
+            self.storage_client = RabbitMQClient("storage_" + queue_name)
 
 
     def get_connection_string(self) -> str:
@@ -36,6 +40,9 @@ class RabbitMQClient:
         channel.queue_declare(queue=self.AUDIO_QUEUE, durable=True)
         channel.queue_declare(queue=self.STREAMER_QUEUE, durable=True)
         channel.queue_declare(queue=self.CHAT_QUEUE, durable=True)
+
+        channel.queue_declare(queue='storage_'+self.STREAMER_QUEUE, durable=True)
+        channel.queue_declare(queue='storage_'+self.CHAT_QUEUE, durable=True)
 
         connection.close()
         logger.info("Queues setup ended")
@@ -62,7 +69,7 @@ class RabbitMQClient:
                     time.sleep(self.retry_delay)
 
 
-    def send_message(self, message: bytes):
+    def send_message(self, message: bytes, send_to_storage: bool = False):
         if not self.channel:
             self.connect()
 
@@ -71,13 +78,16 @@ class RabbitMQClient:
                 exchange='',
                 routing_key=self.queue_name,
                 body=message,
-                properties=pika.BasicProperties(delivery_mode=2)  # Make message persistent
+                properties=pika.BasicProperties(delivery_mode=2)
             )
             logger.info(f"Sent message to {self.queue_name}")
         except Exception as e:
             logger.error(f"Failed to send message: {e}")
-            self.connect()  # Reconnect in case of error
-            self.send_message(message)  # Retry sending the message
+            self.connect()
+            self.send_message(message)
+
+        if send_to_storage:
+            self.storage_client.send_message(message)
 
 
     def consume_messages(self, callback):
