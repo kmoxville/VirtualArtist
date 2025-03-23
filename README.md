@@ -25,7 +25,7 @@
 ## 🚀 Запуск проекта  
 1. Склонируйте репозиторий:  
    ```bash
-   git clone https://github.com/your-repo/virtual-artist.git
+   git clone https://github.com/kmoxville/VirtualArtist.git
    cd virtual-artist
    ```
 2. Создайте .env в корне проекта
@@ -37,6 +37,10 @@
    POSTGRES_DB=virtual_artist
    RABBITMQ_USER=test
    RABBITMQ_PASSWORD=test
+   PYTHONPATH=.
+   OPENAI_API_KEY=KEY
+   MAIN_LANG=ru
+
    ```
 2. Запустите контейнеры:  
    ```bash
