@@ -17,6 +17,8 @@ class ChatEngine:
         self.workflow = StateGraph(state_schema=MessagesState)
         self.workflow.add_node("model", self.call_model)
         self.workflow.add_edge(START, "model")
+        self.gpt_answers_queue = RabbitMQClient(RabbitMQClient.GPT_ANSWERS_QUEUE, True)
+        self.summary_limit = 1024
 
         memory = MemorySaver()
         self.app = self.workflow.compile(checkpointer=memory)
@@ -35,7 +37,14 @@ class ChatEngine:
             },
             config={"configurable": {"thread_id": "1"}})
         
-        logger.info(f'ChatGPT response: {response["messages"][-1].content}')
+        try:
+            gpt_answer = response["messages"][-1].content
+        except Exception as e:
+            logger.error(f"gpt didn`t return reponse: {e}")
+            gpt_answer = ""
+        
+        self.gpt_answers_queue.send_message(message=gpt_answer, send_to_storage=True)
+        logger.info(f'ChatGPT response: {gpt_answer}')
 
 
     def consume_chat_messages(self):
@@ -82,7 +91,7 @@ class ChatEngine:
         if len(message_history) >= 20:
             last_human_messages = state["messages"][-10:]
             summary_prompt = (
-                "Сконденсируй приведенные выше сообщения чата в одно итоговое сообщение. Включи как можно больше конкретных деталей."
+                f"Сконденсируй приведенные выше сообщения чата в одно итоговое сообщение. Включи как можно больше конкретных деталей. Уложись в {self.summary_limit} символов"
             )
             summary_message = self.model.invoke(
                 message_history + [HumanMessage(content=summary_prompt)]

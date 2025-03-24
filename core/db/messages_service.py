@@ -1,12 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from core.db.database import SessionLocal
+from db.database import SessionLocal
 from db.models import StreamerMessage
 
 class MessagesService:
     @staticmethod
-    def save_message(content: str):
+    def save_message(content: str, source: str):
         session = SessionLocal()
-        new_message = StreamerMessage(content=content)
+        new_message = StreamerMessage(content=content, source=source)
         session.add(new_message)
         session.commit()
 

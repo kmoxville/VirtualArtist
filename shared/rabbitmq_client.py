@@ -10,6 +10,7 @@ class RabbitMQClient:
     AUDIO_QUEUE = "audio_queue"
     STREAMER_QUEUE = "chat_engine_streamer_messages"
     CHAT_QUEUE = "chat_engine_chat_messages"
+    GPT_ANSWERS_QUEUE = "chat_engine_gpt_answers"
     
     def __init__(self, queue_name="", save_to_storage: bool = False):
         self.queue_name = queue_name
@@ -40,9 +41,11 @@ class RabbitMQClient:
         channel.queue_declare(queue=self.AUDIO_QUEUE, durable=True)
         channel.queue_declare(queue=self.STREAMER_QUEUE, durable=True)
         channel.queue_declare(queue=self.CHAT_QUEUE, durable=True)
+        channel.queue_declare(queue=self.GPT_ANSWERS_QUEUE, durable=True)
 
         channel.queue_declare(queue='storage_'+self.STREAMER_QUEUE, durable=True)
         channel.queue_declare(queue='storage_'+self.CHAT_QUEUE, durable=True)
+        channel.queue_declare(queue='storage_'+self.GPT_ANSWERS_QUEUE, durable=True)
 
         connection.close()
         logger.info("Queues setup ended")
