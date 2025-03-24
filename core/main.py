@@ -1,10 +1,11 @@
-from contextlib import asynccontextmanager
+from contextlib import contextmanager
 from fastapi import FastAPI
 import uvicorn
 import logging
 import sys
 from config import APP_PORT
 from shared import RabbitMQClient
+from storage import StorageService
 
 
 logging.basicConfig(
@@ -14,19 +15,23 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger("core")
+storage_service = StorageService()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+def lifespan(app: FastAPI):
     RabbitMQClient().setup_queues()
+    storage_service.start_consumers()
+
     yield
+    
+    storage_service.stop_consumers()
 
 
 app = FastAPI(title="Core Service", lifespan=lifespan)
 
 
 @app.get("/")
-async def root():
+def root():
     return {"message": "Core Service is running"}
 
 

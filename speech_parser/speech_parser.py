@@ -11,7 +11,7 @@ class SpeechParser:
         self.connection = None
         self.channel = None
         self.transcriber = WhisperTranscriber("large")
-        self.streamer_queue = RabbitMQClient(RabbitMQClient.STREAMER_QUEUE)
+        self.streamer_queue = RabbitMQClient(RabbitMQClient.STREAMER_QUEUE, True)
         self.lang = lang
 
 
@@ -19,4 +19,4 @@ class SpeechParser:
         logger.info("Transcribe text start")
         text = self.transcriber.transcribe(body, self.lang)
         logger.info(f"Transcribed text: {text}")
-        self.streamer_queue.send_message(text)
+        self.streamer_queue.send_message(message=text, send_to_storage=True)
