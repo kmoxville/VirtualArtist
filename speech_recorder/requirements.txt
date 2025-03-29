@@ -1,0 +1,4 @@
+wave
+pyaudio
+keyboard
+pika
