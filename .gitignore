@@ -172,3 +172,5 @@ cython_debug/
 
 #custom
 docker-compose.override.yml
+speech_recorder/shared/__init__.py
+speech_recorder/shared/rabbitmq_client.py

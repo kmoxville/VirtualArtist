@@ -19,7 +19,6 @@ ENV PYTHONPATH=/app
 
 COPY ./speech_parser/requirements.txt /app
 
-RUN pip install --cache-dir=/tmp/pip_cache torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 RUN pip install --cache-dir=/tmp/pip_cache -r requirements.txt
 
 CMD ["python", "main.py"]
