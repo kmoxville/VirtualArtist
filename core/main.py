@@ -6,6 +6,8 @@ import sys
 from config import APP_PORT
 from shared import RabbitMQClient
 from storage import StorageService
+from api.v1.prompt import router as prompts_router
+from api.v1.messages import router as messages_router
 
 
 logging.basicConfig(
@@ -28,7 +30,8 @@ def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Core Service", lifespan=lifespan)
-
+app.include_router(prompts_router, prefix="/api/v1/prompt")
+app.include_router(messages_router, prefix="/api/v1/messages")
 
 @app.get("/")
 def root():

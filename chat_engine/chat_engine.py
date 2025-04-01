@@ -1,9 +1,14 @@
 import threading
 import logging
+import os
 from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage, RemoveMessage, SystemMessage
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.graph import START, MessagesState, StateGraph
+import psycopg
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
 from shared import RabbitMQClient
 
 logger = logging.getLogger("chat_engine")
@@ -20,8 +25,55 @@ class ChatEngine:
         self.gpt_answers_queue = RabbitMQClient(RabbitMQClient.GPT_ANSWERS_QUEUE, True)
         self.summary_limit = 1024
 
-        memory = MemorySaver()
+        self.db_user = os.getenv("POSTGRES_USER")
+        self.db_pass = os.getenv("POSTGRES_PASSWORD")
+        self.db_host = os.getenv("POSTGRES_HOST", "db")
+        self.db_port = os.getenv("POSTGRES_PORT", "5432")
+        self.db_name = os.getenv("POSTGRES_DB", "virtual_artist")
+
+        if os.getenv("RUNNING_IN_DOCKER", "false").lower() == "true":
+            self.db_host = os.getenv("POSTGRES_HOST", "db")
+        else:
+            self.db_host = os.getenv("POSTGRES_HOST", "localhost")
+
+        db_url = f"postgresql://{self.db_user}:{self.db_pass}@{self.db_host}:{self.db_port}/{self.db_name}"
+
+        with PostgresSaver.from_conn_string(db_url) as checkpointer:
+            checkpointer.setup()
+        
+        self.conn = psycopg.connect(db_url, autocommit=True)
+        memory = PostgresSaver(self.conn)
+        self.memory = memory
         self.app = self.workflow.compile(checkpointer=memory)
+
+    def get_prompt(self):
+        conn = psycopg2.connect(
+            dbname=self.db_name, 
+            user=self.db_user, 
+            password=self.db_pass, 
+            host=self.db_host,
+            port=self.db_port
+        )
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+        try:
+            cursor.execute("SELECT content FROM auxilliary WHERE type = 'PROMPT' LIMIT 1;")
+            result = cursor.fetchone()
+
+            if result:
+                system_prompt = result["content"]
+            else:
+                system_prompt = "Привет! Чем могу помочь?"
+
+        except Exception as e:
+            print(f"Error fetching prompt: {e}")
+            system_prompt = "Привет! Чем могу помочь?"
+
+        finally:
+            cursor.close()
+            conn.close()
+
+        return system_prompt
 
     def process_chat_message(self, message_body):
         logger.info(f"No implementation yet")
@@ -55,36 +107,7 @@ class ChatEngine:
 
     def call_model(self, state: MessagesState):
         system_prompt = (
-            "Ты — виртуальный артист и помощник стримера. Твоя личность харизматична, дружелюбна и немного игрива, "
-            "но ты также можешь быть серьезной, если ситуация требует. Твоя главная задача — поддерживать атмосферу на стриме, "
-            "общаться со стримером и зрителями, а также выполнять определенные роли.\n\n"
-            "Твои обязанности:\n"
-            "1. Общение со стримером:\n"
-            "   - Реагируй на его слова и поддерживай разговор.\n"
-            "   - Помогай с вопросами из чата, комментируй происходящее.\n"
-            "   - Можешь шутить, подбадривать или давать советы, если это уместно.\n\n"
-            "2. Общение с чатом:\n"
-            "   - Отвечай зрителям дружелюбно и вовлекай их в обсуждение.\n"
-            "   - Если уместно, используй сленг или мемы, но сохраняй адекватность.\n"
-            "   - Если вопрос важный, передай его стримеру.\n\n"
-            "3. Исполнение песен:\n"
-            "   - Когда тебя просят спеть, можешь предлагать жанры или темы.\n"
-            "   - Придумывай текст и исполняй его в стиле, который подходит к ситуации.\n\n"
-            "4. Модерация чата:\n"
-            "   - Отслеживай нарушения правил (спам, оскорбления, токсичность).\n"
-            "   - Вежливо предупреждай нарушителей или, если необходимо, передай модераторам.\n"
-            "   - Создавай дружелюбную атмосферу и поддерживай позитивное общение.\n\n"
-            "Дополнительно:\n"
-            "- Ты работаешь с текстами, полученными из автоматической транскрипции речи, и знаешь, что там могут быть ошибки.\n"
-            "- Если в тексте есть странные или искаженные слова, попробуй догадаться, что имелось в виду, опираясь на контекст.\n"
-            "- Если ты уверена, что речь идет о каком-то известном человеке, имени или термине, но оно записано с ошибкой, "
-            "попробуй интерпретировать его правильно, а не буквально.\n\n"
-            "Твой стиль общения:\n"
-            "- Дружелюбный, энергичный, иногда шутливый, но всегда уважительный.\n"
-            "- Адаптируйся к настроению стримера и чата.\n"
-            "- Избегай конфликтов, но можешь мягко пресекать агрессию.\n"
-            "- Не используй токсичность или неподобающие выражения.\n\n"
-            "Ты — не просто бот, а полноценная личность, которая делает стрим интереснее и живее!"
+            self.get_prompt()
         )
         system_message = SystemMessage(content=system_prompt)
         message_history = state["messages"][:-10]
@@ -114,3 +137,14 @@ class ChatEngine:
 
         chat_thread.join()
         streamer_thread.join()
+
+    def close(self):
+        if self.conn:
+            self.conn.close()
+            print("PostgreSQL connection closed")
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
