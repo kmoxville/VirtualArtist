@@ -3,7 +3,7 @@ import logging
 import threading
 
 from shared import RabbitMQClient
-from db.messages_service import MessagesService
+from core.services.messages_service import MessagesService
 
 logger = logging.getLogger("core")
 
