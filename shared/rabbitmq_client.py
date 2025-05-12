@@ -11,6 +11,7 @@ class RabbitMQClient:
     STREAMER_QUEUE = "chat_engine_streamer_messages"
     CHAT_QUEUE = "chat_engine_chat_messages"
     GPT_ANSWERS_QUEUE = "chat_engine_gpt_answers"
+    GENERATED_VOICE_QUEUE = "generated_voice"
     
     def __init__(self, queue_name="", save_to_storage: bool = False):
         self.queue_name = queue_name

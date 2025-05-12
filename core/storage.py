@@ -1,9 +1,8 @@
-import asyncio
 import logging
 import threading
 
 from shared import RabbitMQClient
-from core.services.messages_service import MessagesService
+from services.messages_service import MessagesService
 
 logger = logging.getLogger("core")
 
