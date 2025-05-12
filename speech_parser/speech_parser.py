@@ -8,8 +8,6 @@ logger = logging.getLogger("speech_parser")
 
 class SpeechParser:
     def __init__(self, lang: str):
-        self.connection = None
-        self.channel = None
         self.transcriber = WhisperTranscriber("large")
         self.streamer_queue = RabbitMQClient(RabbitMQClient.STREAMER_QUEUE, True)
         self.lang = lang
