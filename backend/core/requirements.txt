@@ -6,3 +6,5 @@ asyncpg
 pika
 alembic
 psycopg2
+pydub
+python-multipart
