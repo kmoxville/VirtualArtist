@@ -2,7 +2,7 @@ services:
   core:
     container_name: core
     build: 
-      context: ./
+      context: ./backend
       dockerfile: ./core/Dockerfile
     ports:
       - "${APP_PORT}:8000"
@@ -22,7 +22,7 @@ services:
   chat_engine:
     container_name: chat_engine
     build: 
-      context: ./
+      context: ./backend
       dockerfile: ./chat_engine/Dockerfile
     env_file:
       - .env
@@ -40,7 +40,7 @@ services:
   speech_parser:
     container_name: speech_parser
     build: 
-      context: ./
+      context: ./backend
       dockerfile: ./speech_parser/Dockerfile
     deploy:
       resources:
@@ -67,7 +67,7 @@ services:
   speech_renderer:
     container_name: speech_renderer
     build: 
-      context: ./
+      context: ./backend
       dockerfile: ./speech_renderer/Dockerfile
     deploy:
       resources:

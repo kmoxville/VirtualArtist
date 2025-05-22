@@ -6,7 +6,7 @@ from transformers import AutoProcessor, BarkModel
 import scipy.io.wavfile as wav
 import os
 import torch
-from TTS.api import TTS
+#from TTS.api import TTS
 
 from shared import RabbitMQClient
 

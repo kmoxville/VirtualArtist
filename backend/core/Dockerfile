@@ -13,7 +13,8 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     postgresql-server-dev-all \
-    libpq-dev
+    libpq-dev \
+    ffmpeg
 
 RUN pip install wheel
 RUN pip install --upgrade setuptools
