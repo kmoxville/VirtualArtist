@@ -16,7 +16,7 @@ ENV PYTHONPATH=/app
 
 COPY ./speech_renderer/requirements.txt /app
 
-RUN pip install torch==2.5.1+cu121 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+RUN pip install torch==2.5.1 torchaudio==2.5.1
 
 RUN pip install --cache-dir=/tmp/pip_cache -r requirements.txt
 

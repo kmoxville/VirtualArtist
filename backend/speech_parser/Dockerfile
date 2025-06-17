@@ -5,7 +5,8 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     python3-dev \
     build-essential \
-    portaudio19-dev
+    portaudio19-dev \
+    default-libmysqlclient-dev
 
 WORKDIR /app
 
