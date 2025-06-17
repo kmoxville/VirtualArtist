@@ -6,9 +6,8 @@ asyncpg
 pika
 keyboard
 pyaudio
-wave
 openai-whisper
 ffmpeg
 noisereduce
 faster-whisper
-onnxruntime-gpu
+#onnxruntime-gpu
